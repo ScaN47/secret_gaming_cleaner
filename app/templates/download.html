@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Скачать файл - DropMe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .file-info {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #667eea;
+        }
+
+        .file-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .file-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            word-break: break-word;
+            margin-bottom: 8px;
+        }
+
+        .file-meta {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        .btn-download:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-section {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border-left: 4px solid #f56565;
+        }
+
+        .error-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .error-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #742a2a;
+            margin-bottom: 5px;
+        }
+
+        .error-text {
+            font-size: 14px;
+            color: #742a2a;
+        }
+
+        .home-link {
+            margin-top: 15px;
+        }
+
+        .home-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .home-link a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            .logo {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">💾 DropMe</div>
+        </div>
+
+        <div id="content"></div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const password = params.get('password');
+        
+        // Get file ID from URL path
+        const fileId = window.location.pathname.split('/').pop();
+
+        async function checkFile() {
+            try {
+                const response = await fetch(`/api/file/${fileId}?password=${encodeURIComponent(password || '')}`);
+                const data = await response.json();
+
+                if (response.status === 200) {
+                    showDownloadForm(data);
+                } else if (response.status === 403) {
+                    showPasswordForm();
+                } else {
+                    showError('Файл не найден или истёк');
+                }
+            } catch (error) {
+                showError('Ошибка: ' + error.message);
+            }
+        }
+
+        function showDownloadForm(data) {
+            const content = document.getElementById('content');
+            const encryptedBadge = data.encrypted ? '<br><span style="font-size: 11px; background: #c3dafe; color: #3c366b; padding: 3px 8px; border-radius: 3px; display: inline-block; margin-top: 5px;">🔒 Зашифрован</span>' : '';
+            
+            let timeInfo = '';
+            if (data.remaining_time) {
+                timeInfo = `<div style="margin-top: 10px; padding: 10px; background: #fef5e7; border-radius: 6px; border-left: 3px solid #f39c12;">
+                    <div style="font-size: 12px; color: #7d6608;">⏰ Оставшееся время жизни файла:</div>
+                    <div id="countdown" style="font-size: 14px; font-weight: 600; color: #d68910; margin-top: 5px;"></div>
+                </div>`;
+            }
+            
+            content.innerHTML = `
+                <div class="file-info">
+                    <div class="file-icon">📄</div>
+                    <div class="file-name">${escapeHtml(data.filename)}</div>
+                    <div class="file-meta">
+                        Осталось загрузок: ${data.remaining || '∞'}<br>
+                        Загружено: ${data.downloads} раз
+                        ${encryptedBadge}
+                    </div>
+                    ${timeInfo}
+                </div>
+                <button class="btn-download" onclick="downloadFile()">⬇ Скачать файл</button>
+                <div class="home-link">
+                    <a href="/">← Вернуться на главную</a>
+                </div>
+            `;
+            
+            // Start countdown if time info exists
+            if (data.remaining_time) {
+                startCountdown(data.remaining_time);
+            }
+        }
+        
+        function formatTime(seconds) {
+            if (seconds <= 0) return "Истёк";
+            
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            if (days > 0) {
+                return `${days}д ${hours}ч ${minutes}м`;
+            } else if (hours > 0) {
+                return `${hours}ч ${minutes}м ${secs}с`;
+            } else if (minutes > 0) {
+                return `${minutes}м ${secs}с`;
+            } else {
+                return `${secs}с`;
+            }
+        }
+        
+        function startCountdown(remainingSeconds) {
+            let seconds = remainingSeconds;
+            const countdownEl = document.getElementById('countdown');
+            
+            function updateCountdown() {
+                if (countdownEl) {
+                    countdownEl.textContent = formatTime(seconds);
+                    
+                    if (seconds <= 0) {
+                        countdownEl.textContent = 'Файл истёк! Страница будет перезагружена...';
+                        countdownEl.style.color = '#e74c3c';
+                        setTimeout(() => location.reload(), 3000);
+                        return;
+                    }
+                }
+                seconds--;
+            }
+            
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        }
+
+        function showPasswordForm() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="file-info">
+                    <div class="file-icon">🔒</div>
+                    <div class="file-name">Файл защищен паролем</div>
+                </div>
+                <form onsubmit="submitPassword(event)">
+                    <div class="form-group">
+                        <label for="passwordInput">Введите пароль:</label>
+                        <input type="password" id="passwordInput" required autofocus>
+                    </div>
+                    <button type="submit" class="btn-download">Проверить пароль</button>
+                </form>
+                <div class="home-link">
+                    <a href="/">← Вернуться на главную</a>
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="error-section">
+                    <div class="error-icon">❌</div>
+                    <div class="error-title">Ошибка</div>
+                    <div class="error-text">${escapeHtml(message)}</div>
+                    <div class="home-link">
+                        <a href="/">← Вернуться на главную</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function submitPassword(event) {
+            event.preventDefault();
+            const pwd = document.getElementById('passwordInput').value;
+            window.location.search = '?password=' + encodeURIComponent(pwd);
+        }
+
+        function downloadFile() {
+            const url = `/d/${fileId}?password=${encodeURIComponent(password || '')}`;
+            window.location.href = url;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Check file on load
+        checkFile();
+    </script>
+</body>
+</html>

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DropMe - Файлообменник</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .tagline {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .drop-zone:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .drop-zone.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .drop-zone-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .drop-zone-text {
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .drop-zone-hint {
+            color: #999;
+            font-size: 13px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-options {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .option-group {
+            margin-bottom: 15px;
+        }
+
+        .option-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .option-inputs {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="password"],
+        input[type="number"] {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="password"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input[type="number"] {
+            max-width: 100px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-upload {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-upload:active {
+            transform: translateY(0);
+        }
+
+        .btn-upload:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-cancel {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .progress-section {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-section.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f0fff4;
+            border-radius: 12px;
+            border-left: 4px solid #48bb78;
+        }
+
+        .result-section.active {
+            display: block;
+        }
+
+        .result-section.error {
+            background: #fff5f5;
+            border-left-color: #f56565;
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: #22543d;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .result-section.error .result-title {
+            color: #742a2a;
+        }
+
+        .link-box {
+            background: white;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .link-text {
+            word-break: break-all;
+            color: #2d3748;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            flex: 1;
+        }
+
+        .link-copy {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: background 0.3s;
+        }
+
+        .link-copy:hover {
+            background: #764ba2;
+        }
+
+        .file-info {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 8px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: loading 1.4s infinite;
+        }
+
+        .loading:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loading:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes loading {
+            0%, 80%, 100% {
+                opacity: 0.3;
+            }
+            40% {
+                opacity: 1;
+            }
+        }
+
+        .error-message {
+            color: #742a2a;
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            .drop-zone {
+                padding: 25px;
+            }
+
+            .drop-zone-icon {
+                font-size: 36px;
+            }
+
+            .logo {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">💾 DropMe</div>
+            <div class="tagline">Простой и быстрый файлообменник с шифрованием</div>
+        </div>
+
+        <form id="uploadForm">
+            <div class="upload-section">
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-icon">📁</div>
+                    <div class="drop-zone-text">Перетащите файл сюда</div>
+                    <div class="drop-zone-hint">или кликните для выбора</div>
+                    <input type="file" id="fileInput">
+                </div>
+            </div>
+
+            <div class="upload-options" id="uploadOptions" style="display: none;">
+                <div class="option-group">
+                    <label class="option-label">Пароль (опционально)</label>
+                    <div class="option-inputs">
+                        <input type="password" id="passwordInput" placeholder="Оставьте пусто, если не нужен">
+                    </div>
+                </div>
+
+                <div class="option-group">
+                    <label class="option-label">Время жизни файла</label>
+                    <div class="option-inputs">
+                        <select id="expireSelect" style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;">
+                            <option value="86400">24 часа</option>
+                            <option value="172800">2 дня</option>
+                            <option value="604800">7 дней</option>
+                            <option value="2592000">30 дней</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="option-group">
+                    <label class="option-label">Макс. загрузок (0 = неограниченно)</label>
+                    <div class="option-inputs">
+                        <input type="number" id="maxDownloadsInput" value="0" min="0">
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn-upload" id="uploadBtn">Загрузить</button>
+                    <button type="button" class="btn-cancel" id="cancelBtn">Отмена</button>
+                </div>
+
+                <div class="progress-section" id="progressSection">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Загрузка...</div>
+                </div>
+            </div>
+
+            <div class="result-section" id="resultSection">
+                <div class="result-title" id="resultTitle"></div>
+                <div id="resultContent"></div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadForm = document.getElementById('uploadForm');
+        const uploadOptions = document.getElementById('uploadOptions');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const progressSection = document.getElementById('progressSection');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const resultSection = document.getElementById('resultSection');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultContent = document.getElementById('resultContent');
+
+        let selectedFile = null;
+
+        // Drag and drop
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            selectedFile = file;
+            dropZone.style.display = 'none';
+            uploadOptions.style.display = 'block';
+            resultSection.classList.remove('active', 'error');
+            
+            const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+            dropZone.innerHTML = `
+                <div class="drop-zone-icon">✓</div>
+                <div class="drop-zone-text">${file.name}</div>
+                <div class="drop-zone-hint">${fileSize} МБ</div>
+            `;
+            dropZone.style.display = 'block';
+            dropZone.style.borderColor = '#48bb78';
+            dropZone.style.background = '#f0fff4';
+        }
+
+        cancelBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            uploadOptions.style.display = 'none';
+            progressSection.classList.remove('active');
+            resultSection.classList.remove('active', 'error');
+            dropZone.style.display = 'block';
+            dropZone.style.borderColor = '#667eea';
+            dropZone.style.background = '#f8f9ff';
+            dropZone.innerHTML = `
+                <div class="drop-zone-icon">📁</div>
+                <div class="drop-zone-text">Перетащите файл сюда</div>
+                <div class="drop-zone-hint">или кликните для выбора</div>
+            `;
+        });
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!selectedFile) return;
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('password', document.getElementById('passwordInput').value);
+            formData.append('expire_seconds', document.getElementById('expireSelect').value);
+            formData.append('max_downloads', document.getElementById('maxDownloadsInput').value);
+
+            uploadBtn.disabled = true;
+            cancelBtn.disabled = true;
+            progressSection.classList.add('active');
+            resultSection.classList.remove('active', 'error');
+
+            try {
+                const xhr = new XMLHttpRequest();
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percentComplete = (e.loaded / e.total) * 100;
+                        progressFill.style.width = percentComplete + '%';
+                        progressText.textContent = Math.round(percentComplete) + '% - ' + (e.loaded / (1024 * 1024)).toFixed(1) + ' МБ';
+                    }
+                });
+
+                xhr.addEventListener('load', () => {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        showSuccess(response);
+                    } else {
+                        showError('Ошибка загрузки: ' + xhr.status);
+                    }
+                    uploadBtn.disabled = false;
+                    cancelBtn.disabled = false;
+                    progressSection.classList.remove('active');
+                });
+
+                xhr.addEventListener('error', () => {
+                    showError('Ошибка сетевого соединения');
+                    uploadBtn.disabled = false;
+                    cancelBtn.disabled = false;
+                    progressSection.classList.remove('active');
+                });
+
+                xhr.open('POST', '/api/upload');
+                xhr.send(formData);
+            } catch (error) {
+                showError('Ошибка: ' + error.message);
+                uploadBtn.disabled = false;
+                cancelBtn.disabled = false;
+                progressSection.classList.remove('active');
+            }
+        });
+
+        function showSuccess(response) {
+            resultSection.classList.add('active');
+            resultSection.classList.remove('error');
+            resultTitle.textContent = '✓ Файл успешно загружен!';
+            
+            const downloadLink = response.link;
+            const fileId = response.id;
+            const qrUrl = `/api/qr/${fileId}`;
+            
+            resultContent.innerHTML = `
+                <div class="link-box">
+                    <div class="link-text">${downloadLink}</div>
+                    <button type="button" class="link-copy" onclick="copyLink('${downloadLink}')">Копировать</button>
+                </div>
+                <div style="text-align: center; margin: 20px 0;">
+                    <img src="${qrUrl}" alt="QR Code" style="width: 200px; height: 200px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                    <div style="font-size: 12px; color: #718096; margin-top: 10px;">Отсканируйте для скачивания</div>
+                </div>
+                <div class="file-info">
+                    ID файла: <strong>${fileId}</strong><br>
+                    Статус: <strong>🔒 Зашифрован (AES-256)</strong><br>
+                    Поделитесь ссылкой или QR-кодом для скачивания файла
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            resultSection.classList.add('active', 'error');
+            resultTitle.textContent = '✗ Ошибка загрузки';
+            resultContent.innerHTML = `<div class="error-message">${message}</div>`;
+        }
+
+        function copyLink(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Ссылка скопирована в буфер обмена!');
+            });
+        }
+    </script>
+
+    <style>
+        .security-info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 11px;
+            max-width: 200px;
+            text-align: right;
+            font-family: monospace;
+            z-index: 1000;
+        }
+    </style>
+    
+    <div class="security-info">
+        🔒 AES-256 шифрование<br>
+        ⏰ Автоудаление по TTL<br>
+        🚀 Сервер-сайд обработка
+    </div>
+</body>
+</html>

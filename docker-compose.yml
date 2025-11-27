@@ -1,0 +1,21 @@
+services:
+  web:
+    build: ./app
+    volumes:
+      - ./app/uploads:/app/uploads
+      - ./db:/app/db
+    environment:
+      - FLASK_ENV=production
+    expose:
+      - "5000"
+
+  nginx:
+    image: nginx:stable
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/letsencrypt  # если планируете Let's Encrypt
+    depends_on:
+      - web
